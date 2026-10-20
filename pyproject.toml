@@ -1,0 +1,19 @@
+[project]
+name = "deckbox"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "XBigTK13X", email = "xbigtk13x@gmail.com" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "PySide6>=6.7.0"
+]
+
+[project.scripts]
+deckbox = "deckbox.main:main"
+
+[build-system]
+requires = ["uv_build>=0.12.3,<0.13.0"]
+build-backend = "uv_build"
