@@ -224,7 +224,8 @@ class DeckboxSidebar(QWidget):
         self.layer_list.blockSignals(True)
         self.layer_list.clear()
 
-        for item in reversed(image_items):
+        active_row = -1
+        for idx, item in enumerate(reversed(image_items)):
             file_name = (
                 os.path.basename(item.file_path) if item.file_path else "Untitled Layer"
             )
@@ -233,6 +234,10 @@ class DeckboxSidebar(QWidget):
             self.layer_list.addItem(list_item)
             if item.isSelected():
                 list_item.setSelected(True)
+                active_row = idx
+
+        if active_row >= 0:
+            self.layer_list.setCurrentRow(active_row)
 
         self.layer_list.blockSignals(False)
 

@@ -152,9 +152,7 @@ class DeckboxGeneratorWindow(QMainWindow):
         for idx, item in enumerate(ordered_items):
             item.setZValue(float(total_items - idx))
 
-    def add_images_to_active_scene(
-        self, file_paths: List[str], target_pos: Optional[QPointF] = None
-    ):
+    def add_images_to_active_scene(self, file_paths: List[str]):
         if not file_paths or not self.page_scenes:
             return
 
@@ -163,10 +161,7 @@ class DeckboxGeneratorWindow(QMainWindow):
         max_z = max([item.zValue() for item in existing_images], default=0.0)
         base_z = max_z + 1.0
 
-        if target_pos is None:
-            center_pt = active_scene.page_rect.center()
-        else:
-            center_pt = target_pos
+        center_pt = active_scene.page_rect.center()
 
         active_scene.clearSelection()
 
@@ -189,6 +184,7 @@ class DeckboxGeneratorWindow(QMainWindow):
                 item.setSelected(True)
 
         self.sidebar.update_layer_list(active_scene.get_image_items())
+        self.view.setFocus()
 
     def load_image_dialog(self):
         file_paths, _ = QFileDialog.getOpenFileNames(

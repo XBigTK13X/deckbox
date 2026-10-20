@@ -157,7 +157,7 @@ class DeckboxScene(QGraphicsScene):
 
 
 class DeckboxView(QGraphicsView):
-    files_dropped = Signal(list, QPointF)
+    files_dropped = Signal(list)
 
     def __init__(self, scene=None, parent=None):
         super().__init__(scene, parent)
@@ -215,7 +215,7 @@ class DeckboxView(QGraphicsView):
     def dropEvent(self, event: QDropEvent):
         paths = self._extract_image_paths(event.mimeData())
         if paths:
-            self.files_dropped.emit(paths, None)
+            self.files_dropped.emit(paths)
             event.acceptProposedAction()
         else:
             super().dropEvent(event)
