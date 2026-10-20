@@ -163,6 +163,11 @@ class DeckboxGeneratorWindow(QMainWindow):
         max_z = max([item.zValue() for item in existing_images], default=0.0)
         base_z = max_z + 1.0
 
+        if target_pos is None:
+            center_pt = active_scene.page_rect.center()
+        else:
+            center_pt = target_pos
+
         active_scene.clearSelection()
 
         for idx, file_path in enumerate(file_paths):
@@ -174,10 +179,10 @@ class DeckboxGeneratorWindow(QMainWindow):
                 base_scale = 100.0 / max(pixmap.width(), pixmap.height())
                 item.setScale(base_scale)
 
-                # Center directly over top-left corner (0.0, 0.0)
-                item_center = item.boundingRect().center() * base_scale
+                raw_center = item.boundingRect().center()
                 item.setPos(
-                    -item_center.x() + (idx * 5.0), -item_center.y() + (idx * 5.0)
+                    center_pt.x() - raw_center.x() + (idx * 5.0),
+                    center_pt.y() - raw_center.y() + (idx * 5.0),
                 )
 
                 active_scene.addItem(item)

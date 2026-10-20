@@ -64,7 +64,15 @@ class DeckboxScene(QGraphicsScene):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.page_rect = QRectF(0.0, 0.0, PAGE_WIDTH_MM, PAGE_HEIGHT_MM)
-        self.setSceneRect(self.page_rect)
+
+        # Give the canvas a margin so the paper floats centered inside the workspace
+        margin = 35.0
+        self.setSceneRect(
+            -margin,
+            -margin,
+            PAGE_WIDTH_MM + (2.0 * margin),
+            PAGE_HEIGHT_MM + (2.0 * margin),
+        )
 
         self.cut_item = QGraphicsPathItem()
         self.fold_item = QGraphicsPathItem()
@@ -135,11 +143,15 @@ class DeckboxScene(QGraphicsScene):
             self.removeItem(item)
 
     def drawBackground(self, painter: QPainter, rect: QRectF):
-        painter.fillRect(rect, QColor(230, 230, 230))
+        # 1. Fill entire visible canvas area with dark gray
+        painter.fillRect(rect, QColor(35, 35, 38))
+
+        # 2. Fill the actual paper sheet area with solid white
         painter.fillRect(self.page_rect, QColor(255, 255, 255))
 
-        page_border_pen = QPen(QColor(180, 180, 180))
-        page_border_pen.setWidthF(0.5)
+        # 3. Draw a subtle edge border around the paper
+        page_border_pen = QPen(QColor(60, 60, 65))
+        page_border_pen.setWidthF(0.4)
         painter.setPen(page_border_pen)
         painter.drawRect(self.page_rect)
 
@@ -158,6 +170,24 @@ class DeckboxView(QGraphicsView):
         self.setViewportUpdateMode(QGraphicsView.ViewportUpdateMode.FullViewportUpdate)
         self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
         self.setAcceptDrops(True)
+
+        # Style the surrounding widget viewport dark
+        self.setStyleSheet("background-color: #232326; border: none;")
+
+    def drawBackground(self, painter: QPainter, rect: QRectF):
+        # 1. Fill surrounding workspace canvas with dark gray
+        painter.fillRect(rect, QColor(35, 35, 38))
+
+        # 2. Fill the actual paper sheet with solid white
+        current_scene = self.scene()
+        if current_scene and hasattr(current_scene, "page_rect"):
+            painter.fillRect(current_scene.page_rect, QColor(255, 255, 255))
+
+            # 3. Subtle page outline
+            page_border_pen = QPen(QColor(60, 60, 65))
+            page_border_pen.setWidthF(0.4)
+            painter.setPen(page_border_pen)
+            painter.drawRect(current_scene.page_rect)
 
     def _extract_image_paths(self, mime_data) -> List[str]:
         image_paths = []
