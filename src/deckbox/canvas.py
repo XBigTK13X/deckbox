@@ -75,15 +75,15 @@ class DeckboxScene(QGraphicsScene):
 
     def setup_template_layers(self):
         cut_pen = QPen(QColor(220, 40, 40))
-        cut_pen.setWidthF(0.3)
-        cut_pen.setCosmetic(True)
+        cut_pen.setWidthF(0.6)
+        cut_pen.setCosmetic(False)
         self.cut_item.setPen(cut_pen)
         self.cut_item.setBrush(QBrush(Qt.BrushStyle.NoBrush))
         self.cut_item.setZValue(100.0)
 
         fold_pen = QPen(QColor(30, 160, 50))
-        fold_pen.setWidthF(0.3)
-        fold_pen.setCosmetic(True)
+        fold_pen.setWidthF(0.6)
+        fold_pen.setCosmetic(False)
         self.fold_item.setPen(fold_pen)
         self.fold_item.setBrush(QBrush(Qt.BrushStyle.NoBrush))
         self.fold_item.setZValue(100.0)
