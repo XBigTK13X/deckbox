@@ -26,6 +26,7 @@ from PySide6.QtWidgets import (
 from .models import PageGeometry, PAGE_WIDTH_MM, PAGE_HEIGHT_MM
 
 SUPPORTED_IMAGE_EXTENSIONS = {".png", ".jpg", ".jpeg", ".bmp", ".webp"}
+SUPPORTED_PROJECT_EXTENSIONS = {".json"}
 
 
 class OverlayImageItem(QGraphicsPixmapItem):
@@ -65,7 +66,6 @@ class DeckboxScene(QGraphicsScene):
         super().__init__(parent)
         self.page_rect = QRectF(0.0, 0.0, PAGE_WIDTH_MM, PAGE_HEIGHT_MM)
 
-        # Give the canvas a margin so the paper floats centered inside the workspace
         margin = 35.0
         self.setSceneRect(
             -margin,
@@ -143,13 +143,9 @@ class DeckboxScene(QGraphicsScene):
             self.removeItem(item)
 
     def drawBackground(self, painter: QPainter, rect: QRectF):
-        # 1. Fill entire visible canvas area with dark gray
         painter.fillRect(rect, QColor(35, 35, 38))
-
-        # 2. Fill the actual paper sheet area with solid white
         painter.fillRect(self.page_rect, QColor(255, 255, 255))
 
-        # 3. Draw a subtle edge border around the paper
         page_border_pen = QPen(QColor(60, 60, 65))
         page_border_pen.setWidthF(0.4)
         painter.setPen(page_border_pen)
@@ -158,6 +154,7 @@ class DeckboxScene(QGraphicsScene):
 
 class DeckboxView(QGraphicsView):
     files_dropped = Signal(list)
+    project_file_dropped = Signal(str)
 
     def __init__(self, scene=None, parent=None):
         super().__init__(scene, parent)
@@ -171,51 +168,56 @@ class DeckboxView(QGraphicsView):
         self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
         self.setAcceptDrops(True)
 
-        # Style the surrounding widget viewport dark
         self.setStyleSheet("background-color: #232326; border: none;")
 
     def drawBackground(self, painter: QPainter, rect: QRectF):
-        # 1. Fill surrounding workspace canvas with dark gray
         painter.fillRect(rect, QColor(35, 35, 38))
 
-        # 2. Fill the actual paper sheet with solid white
         current_scene = self.scene()
         if current_scene and hasattr(current_scene, "page_rect"):
             painter.fillRect(current_scene.page_rect, QColor(255, 255, 255))
 
-            # 3. Subtle page outline
             page_border_pen = QPen(QColor(60, 60, 65))
             page_border_pen.setWidthF(0.4)
             painter.setPen(page_border_pen)
             painter.drawRect(current_scene.page_rect)
 
-    def _extract_image_paths(self, mime_data) -> List[str]:
+    def _extract_dropped_paths(self, mime_data) -> tuple[List[str], List[str]]:
         image_paths = []
+        project_paths = []
         if mime_data.hasUrls():
             for url in mime_data.urls():
                 if url.isLocalFile():
                     local_path = url.toLocalFile()
                     _, ext = os.path.splitext(local_path)
-                    if ext.lower() in SUPPORTED_IMAGE_EXTENSIONS:
+                    ext_lower = ext.lower()
+                    if ext_lower in SUPPORTED_IMAGE_EXTENSIONS:
                         image_paths.append(local_path)
-        return image_paths
+                    elif ext_lower in SUPPORTED_PROJECT_EXTENSIONS:
+                        project_paths.append(local_path)
+        return image_paths, project_paths
 
     def dragEnterEvent(self, event: QDragEnterEvent):
-        if self._extract_image_paths(event.mimeData()):
+        image_paths, project_paths = self._extract_dropped_paths(event.mimeData())
+        if image_paths or project_paths:
             event.acceptProposedAction()
         else:
             super().dragEnterEvent(event)
 
     def dragMoveEvent(self, event: QDragMoveEvent):
-        if self._extract_image_paths(event.mimeData()):
+        image_paths, project_paths = self._extract_dropped_paths(event.mimeData())
+        if image_paths or project_paths:
             event.acceptProposedAction()
         else:
             super().dragMoveEvent(event)
 
     def dropEvent(self, event: QDropEvent):
-        paths = self._extract_image_paths(event.mimeData())
-        if paths:
-            self.files_dropped.emit(paths)
+        image_paths, project_paths = self._extract_dropped_paths(event.mimeData())
+        if project_paths:
+            self.project_file_dropped.emit(project_paths[0])
+            event.acceptProposedAction()
+        elif image_paths:
+            self.files_dropped.emit(image_paths)
             event.acceptProposedAction()
         else:
             super().dropEvent(event)

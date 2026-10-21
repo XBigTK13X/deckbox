@@ -1,3 +1,4 @@
+import os
 import sys
 import signal
 from typing import List, Optional
@@ -51,6 +52,7 @@ class DeckboxGeneratorWindow(QMainWindow):
 
     def _connect_signals(self):
         self.view.files_dropped.connect(self.add_images_to_active_scene)
+        self.view.project_file_dropped.connect(self.load_project_file)
 
         self.sidebar.open_project_requested.connect(self.open_project_dialog)
         self.sidebar.save_project_requested.connect(self.save_project_dialog)
@@ -207,10 +209,7 @@ class DeckboxGeneratorWindow(QMainWindow):
         save_project(file_path, card_w, card_h, box_d, self.page_scenes)
         self.current_project_path = file_path
 
-    def open_project_dialog(self):
-        file_path, _ = QFileDialog.getOpenFileName(
-            self, "Open Project", "", "Project Files (*.json)"
-        )
+    def load_project_file(self, file_path: str):
         if not file_path:
             return
 
@@ -232,10 +231,25 @@ class DeckboxGeneratorWindow(QMainWindow):
         )
         self.current_project_path = file_path
 
-    def export_pdf(self):
-        target_path, _ = QFileDialog.getSaveFileName(
-            self, "Export PDF", "deckbox_letter_300dpi.pdf", "PDF Files (*.pdf)"
+    def open_project_dialog(self):
+        file_path, _ = QFileDialog.getOpenFileName(
+            self, "Open Project", "", "Project Files (*.json)"
         )
+        if file_path:
+            self.load_project_file(file_path)
+
+    def export_pdf(self):
+        if self.current_project_path:
+            project_dir = os.path.dirname(self.current_project_path)
+            project_base, _ = os.path.splitext(
+                os.path.basename(self.current_project_path)
+            )
+            target_path = os.path.join(project_dir, f"{project_base}.pdf")
+        else:
+            target_path, _ = QFileDialog.getSaveFileName(
+                self, "Export PDF", "deckbox_letter_300dpi.pdf", "PDF Files (*.pdf)"
+            )
+
         if target_path:
             export_scenes_to_pdf(self.page_scenes, target_path)
 

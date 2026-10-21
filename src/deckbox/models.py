@@ -75,17 +75,29 @@ def _build_full_template(
     fold_path.moveTo(x_back, -depth_val)
     fold_path.lineTo(x_back + width_val, -depth_val)
 
-    # Top cuts
+    # Top cuts: RIGHT dust flap
     cut_path.moveTo(x_right, 0.0)
     cut_path.lineTo(x_right + chamfer, -flap_val)
     cut_path.lineTo(x_back - chamfer, -flap_val)
     cut_path.lineTo(x_back, 0.0)
 
-    # Top panel & tuck flap attached to BACK
-    cut_path.lineTo(x_back, -depth_val)
-    cut_path.lineTo(x_back + chamfer, -depth_val - flap_val)
-    cut_path.lineTo(x_back + width_val - chamfer, -depth_val - flap_val)
-    cut_path.lineTo(x_back + width_val, -depth_val)
+    # TOP panel & locking tongue attached to BACK
+    tuck_len = max(flap_val, 16.0)
+    tongue_w = min(width_val - 8.0, 32.0)
+    tongue_x1 = x_back + ((width_val - tongue_w) / 2.0)
+    tongue_x2 = tongue_x1 + tongue_w
+    top_y = -depth_val
+
+    cut_path.lineTo(x_back, top_y)
+    cut_path.lineTo(tongue_x1 - 2.0, top_y)
+    cut_path.lineTo(tongue_x1, top_y - (tuck_len * 0.35))
+    cut_path.lineTo(tongue_x1 - 1.2, top_y - (tuck_len * 0.45))
+    cut_path.lineTo(tongue_x1 + 3.0, top_y - tuck_len)
+    cut_path.lineTo(tongue_x2 - 3.0, top_y - tuck_len)
+    cut_path.lineTo(tongue_x2 + 1.2, top_y - (tuck_len * 0.45))
+    cut_path.lineTo(tongue_x2, top_y - (tuck_len * 0.35))
+    cut_path.lineTo(tongue_x2 + 2.0, top_y)
+    cut_path.lineTo(x_back + width_val, top_y)
     cut_path.lineTo(x_back + width_val, 0.0)
 
     # LEFT top dust flap
@@ -93,19 +105,38 @@ def _build_full_template(
     cut_path.lineTo(x_front - chamfer, -flap_val)
     cut_path.lineTo(x_front, 0.0)
 
-    # FRONT panel thumb notch
-    notch_center_x = x_front + (width_val / 2.0)
+    # FRONT panel flap lock, slot, and reinforced interior fold
+    front_flap_h = max(flap_val, 14.0)
     effective_notch_rad = min(hole_rad, (width_val / 2.0) - 2.0)
+    notch_center_x = x_front + (width_val / 2.0)
+
+    slit_clearance = 1.0
+    slit_half_w = (tongue_w / 2.0) + slit_clearance
+    slot_x1 = max(x_front, notch_center_x - slit_half_w)
+    slot_x2 = min(total_w, notch_center_x + slit_half_w)
+
+    fold_path.moveTo(x_front, 0.0)
+    fold_path.lineTo(slot_x1, 0.0)
+
+    cut_path.moveTo(slot_x1, 0.0)
+    cut_path.lineTo(slot_x2, 0.0)
+
+    fold_path.moveTo(slot_x2, 0.0)
+    fold_path.lineTo(total_w, 0.0)
+
+    cut_path.moveTo(x_front, 0.0)
+    cut_path.lineTo(x_front + chamfer, -front_flap_h)
     if effective_notch_rad > 0.0:
-        cut_path.lineTo(notch_center_x - effective_notch_rad, 0.0)
+        cut_path.lineTo(notch_center_x - effective_notch_rad, -front_flap_h)
         cut_path.arcTo(
             notch_center_x - effective_notch_rad,
-            -effective_notch_rad,
+            -front_flap_h - effective_notch_rad,
             effective_notch_rad * 2.0,
             effective_notch_rad * 2.0,
             180.0,
-            180.0,
+            -180.0,
         )
+    cut_path.lineTo(total_w - chamfer, -front_flap_h)
     cut_path.lineTo(total_w, 0.0)
 
     # Rightmost glue flap on FRONT
@@ -187,11 +218,23 @@ def _build_half_piece_back(
     cut_path.lineTo(x_back - chamfer, -flap_val)
     cut_path.lineTo(x_back, 0.0)
 
-    # TOP panel & tuck flap
-    cut_path.lineTo(x_back, -depth_val)
-    cut_path.lineTo(x_back + chamfer, -depth_val - flap_val)
-    cut_path.lineTo(x_edge - chamfer, -depth_val - flap_val)
-    cut_path.lineTo(x_edge, -depth_val)
+    # TOP panel & locking tongue
+    tuck_len = max(flap_val, 16.0)
+    tongue_w = min(width_val - 8.0, 32.0)
+    tongue_x1 = x_back + ((width_val - tongue_w) / 2.0)
+    tongue_x2 = tongue_x1 + tongue_w
+    top_y = -depth_val
+
+    cut_path.lineTo(x_back, top_y)
+    cut_path.lineTo(tongue_x1 - 2.0, top_y)
+    cut_path.lineTo(tongue_x1, top_y - (tuck_len * 0.35))
+    cut_path.lineTo(tongue_x1 - 1.2, top_y - (tuck_len * 0.45))
+    cut_path.lineTo(tongue_x1 + 3.0, top_y - tuck_len)
+    cut_path.lineTo(tongue_x2 - 3.0, top_y - tuck_len)
+    cut_path.lineTo(tongue_x2 + 1.2, top_y - (tuck_len * 0.45))
+    cut_path.lineTo(tongue_x2, top_y - (tuck_len * 0.35))
+    cut_path.lineTo(tongue_x2 + 2.0, top_y)
+    cut_path.lineTo(x_edge, top_y)
     cut_path.lineTo(x_edge, 0.0)
 
     # Side glue flap
@@ -222,7 +265,7 @@ def _build_half_piece_back(
 def _build_half_piece_front(
     dims: BoxDimensions,
 ) -> tuple[QPainterPath, QPainterPath, List[PanelLabel]]:
-    # Piece 2: LEFT + FRONT + BOTTOM panel + thumb notch
+    # Piece 2: LEFT + FRONT + BOTTOM panel + reinforced locking notch
     cut_path = QPainterPath()
     fold_path = QPainterPath()
 
@@ -253,19 +296,39 @@ def _build_half_piece_front(
     cut_path.lineTo(x_front - chamfer, -flap_val)
     cut_path.lineTo(x_front, 0.0)
 
-    # FRONT thumb notch
-    notch_center_x = x_front + (width_val / 2.0)
+    # FRONT panel flap lock, slot, and reinforced interior fold
+    front_flap_h = max(flap_val, 14.0)
     effective_notch_rad = min(hole_rad, (width_val / 2.0) - 2.0)
+    notch_center_x = x_front + (width_val / 2.0)
+    tongue_w = min(width_val - 8.0, 32.0)
+
+    slit_clearance = 1.0
+    slit_half_w = (tongue_w / 2.0) + slit_clearance
+    slot_x1 = max(x_front, notch_center_x - slit_half_w)
+    slot_x2 = min(x_edge, notch_center_x + slit_half_w)
+
+    fold_path.moveTo(x_front, 0.0)
+    fold_path.lineTo(slot_x1, 0.0)
+
+    cut_path.moveTo(slot_x1, 0.0)
+    cut_path.lineTo(slot_x2, 0.0)
+
+    fold_path.moveTo(slot_x2, 0.0)
+    fold_path.lineTo(x_edge, 0.0)
+
+    cut_path.moveTo(x_front, 0.0)
+    cut_path.lineTo(x_front + chamfer, -front_flap_h)
     if effective_notch_rad > 0.0:
-        cut_path.lineTo(notch_center_x - effective_notch_rad, 0.0)
+        cut_path.lineTo(notch_center_x - effective_notch_rad, -front_flap_h)
         cut_path.arcTo(
             notch_center_x - effective_notch_rad,
-            -effective_notch_rad,
+            -front_flap_h - effective_notch_rad,
             effective_notch_rad * 2.0,
             effective_notch_rad * 2.0,
             180.0,
-            180.0,
+            -180.0,
         )
+    cut_path.lineTo(x_edge - chamfer, -front_flap_h)
     cut_path.lineTo(x_edge, 0.0)
 
     # Side glue flap
@@ -284,7 +347,7 @@ def _build_half_piece_front(
     cut_path.lineTo(x_front, height_val + depth_val)
     cut_path.lineTo(x_front, height_val)
 
-    # LEFT bottom flap
+    # LEFT bottom flap & left outer edge
     cut_path.lineTo(x_front - chamfer, height_val + flap_val)
     cut_path.lineTo(x_left + chamfer, height_val + flap_val)
     cut_path.lineTo(x_left, height_val)
